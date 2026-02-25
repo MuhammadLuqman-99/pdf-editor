@@ -1,12 +1,32 @@
-import React, { useEffect, useRef, forwardRef, useCallback } from 'react'
+import React, { useEffect, useRef, forwardRef } from 'react'
 import { RENDER_SCALE } from '../utils/constants'
 import { fromNorm } from '../utils/coordinates'
 
 const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentTool, onCanvasClick, onCanvasMouseDown, onPageChange }, ref) {
   const areaRef = useRef(null)
-  const prevZoomRef = useRef(zoomScale)
 
-  // Render all pages
+  // Store latest props in refs so event listeners always see current values
+  const onClickRef = useRef(onCanvasClick)
+  const onMouseDownRef = useRef(onCanvasMouseDown)
+  const entriesRef = useRef(entries)
+  const zoomRef = useRef(zoomScale)
+  const toolRef = useRef(currentTool)
+
+  useEffect(() => { onClickRef.current = onCanvasClick }, [onCanvasClick])
+  useEffect(() => { onMouseDownRef.current = onCanvasMouseDown }, [onCanvasMouseDown])
+  useEffect(() => { entriesRef.current = entries }, [entries])
+  useEffect(() => { zoomRef.current = zoomScale }, [zoomScale])
+  useEffect(() => { toolRef.current = currentTool }, [currentTool])
+
+  // Update text-layer cursor when tool changes (without full re-render)
+  useEffect(() => {
+    if (!areaRef.current) return
+    areaRef.current.querySelectorAll('.text-layer').forEach(layer => {
+      layer.classList.toggle('select-mode', currentTool === 'select')
+    })
+  }, [currentTool])
+
+  // Render pages — ONLY when pdfDoc or zoomScale changes
   useEffect(() => {
     if (!pdfDoc || !areaRef.current) return
     const area = areaRef.current
@@ -39,19 +59,20 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
 
         const textLayer = document.createElement('div')
         textLayer.className = 'text-layer'
-        if (currentTool === 'select') textLayer.classList.add('select-mode')
+        if (toolRef.current === 'select') textLayer.classList.add('select-mode')
         textLayer.dataset.page = i
 
+        // Use refs so handlers always see latest state
         textLayer.addEventListener('click', (e) => {
           if (e.target !== e.currentTarget) return
           const rect = e.currentTarget.getBoundingClientRect()
-          onCanvasClick(i, e.clientX - rect.left, e.clientY - rect.top, e.currentTarget)
+          onClickRef.current(i, e.clientX - rect.left, e.clientY - rect.top, e.currentTarget)
         })
 
         textLayer.addEventListener('mousedown', (e) => {
           if (e.target !== e.currentTarget) return
           const rect = e.currentTarget.getBoundingClientRect()
-          onCanvasMouseDown(i, e.clientX - rect.left, e.clientY - rect.top, e.currentTarget, e)
+          onMouseDownRef.current(i, e.clientX - rect.left, e.clientY - rect.top, e.currentTarget, e)
         })
 
         textLayer.addEventListener('touchend', (e) => {
@@ -60,7 +81,7 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
           const t = e.changedTouches[0]
           const rect = e.currentTarget.getBoundingClientRect()
           e.preventDefault()
-          onCanvasClick(i, t.clientX - rect.left, t.clientY - rect.top, e.currentTarget)
+          onClickRef.current(i, t.clientX - rect.left, t.clientY - rect.top, e.currentTarget)
         })
 
         container.appendChild(textLayer)
@@ -71,14 +92,14 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
         await page.render({ canvasContext: ctx, viewport }).promise
       }
 
-      // Restore entries
-      entries.forEach(entry => {
+      // Restore existing entries after re-render (zoom change)
+      const currentEntries = entriesRef.current
+      currentEntries.forEach(entry => {
         if (!entry.element || entry.type === 'watermark') return
         const layer = area.querySelector(`.text-layer[data-page="${entry.pageNum}"]`)
         if (!layer) return
 
         if (entry.type === 'draw') {
-          // SVG paths need svg overlay
           let svg = layer.querySelector('.svg-overlay')
           if (!svg) {
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -87,11 +108,9 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
             svg.style.height = '100%'
             layer.appendChild(svg)
           }
-          // Re-scale path
           if (entry.pathD) {
             const s = RENDER_SCALE * zoomScale
-            const scaledD = entry.pathD.replace(/[\d.]+/g, (match, offset, str) => {
-              // Check if this is a number (not a command letter)
+            const scaledD = entry.pathD.replace(/[\d.]+/g, (match) => {
               const num = parseFloat(match)
               return isNaN(num) ? match : (num * s).toFixed(1)
             })
@@ -108,7 +127,6 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
             svg.style.height = '100%'
             layer.appendChild(svg)
           }
-          // Update coordinates
           const line = entry.element.querySelector('line')
           if (line) {
             line.setAttribute('x1', fromNorm(entry.normX, zoomScale))
@@ -124,10 +142,10 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
           if (entry.fontSize) {
             entry.element.style.fontSize = (entry.fontSize * zoomScale) + 'px'
           }
-          if (entry.normWidth && (entry.type !== 'text' && entry.type !== 'symbol' && entry.type !== 'date')) {
+          if (entry.normWidth && !['text', 'symbol', 'date'].includes(entry.type)) {
             entry.element.style.width = fromNorm(entry.normWidth, zoomScale) + 'px'
           }
-          if (entry.normHeight && (entry.type !== 'text' && entry.type !== 'symbol' && entry.type !== 'date')) {
+          if (entry.normHeight && !['text', 'symbol', 'date'].includes(entry.type)) {
             entry.element.style.height = fromNorm(entry.normHeight, zoomScale) + 'px'
           }
           layer.appendChild(entry.element)
@@ -136,8 +154,7 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
     }
 
     renderPages()
-    prevZoomRef.current = zoomScale
-  }, [pdfDoc, zoomScale, entries, currentTool, onCanvasClick, onCanvasMouseDown])
+  }, [pdfDoc, zoomScale]) // Only re-render on PDF load or zoom change
 
   // Scroll spy for page tracking
   useEffect(() => {
