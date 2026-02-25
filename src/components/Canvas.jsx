@@ -142,7 +142,7 @@ const Canvas = forwardRef(function Canvas({ pdfDoc, zoomScale, entries, currentT
           // Set fontSize on the editable child (not the wrapper)
           const target = entry.editableEl || entry.element
           if (entry.fontSize) {
-            target.style.fontSize = (entry.fontSize * zoomScale) + 'px'
+            target.style.fontSize = (entry.fontSize * RENDER_SCALE * zoomScale) + 'px'
           }
           if (entry.normWidth && !['text', 'symbol', 'date'].includes(entry.type)) {
             entry.element.style.width = fromNorm(entry.normWidth, zoomScale) + 'px'

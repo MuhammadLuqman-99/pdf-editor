@@ -268,7 +268,7 @@ export default function App() {
       const box = document.createElement('div')
       box.className = 'text-box'
       box.contentEditable = 'true'
-      box.style.fontSize = (fontSize * zoomScale) + 'px'
+      box.style.fontSize = (fontSize * RENDER_SCALE * zoomScale) + 'px'
       box.style.color = textColor
       wrapper.appendChild(box)
       const entry = {
@@ -289,7 +289,7 @@ export default function App() {
       wrapper.style.top = (y - 8) + 'px'
       const box = document.createElement('div')
       box.className = 'text-box'
-      box.style.fontSize = (fontSize * zoomScale) + 'px'
+      box.style.fontSize = (fontSize * RENDER_SCALE * zoomScale) + 'px'
       box.style.color = textColor
       box.style.fontWeight = 'bold'
       box.textContent = symbol
@@ -313,7 +313,7 @@ export default function App() {
       const box = document.createElement('div')
       box.className = 'text-box'
       box.contentEditable = 'true'
-      box.style.fontSize = (fontSize * zoomScale) + 'px'
+      box.style.fontSize = (fontSize * RENDER_SCALE * zoomScale) + 'px'
       box.style.color = textColor
       box.textContent = dateStr
       wrapper.appendChild(box)
@@ -549,7 +549,7 @@ export default function App() {
           cell.contentEditable = 'true'
           cell.style.border = '1px solid #000'
           cell.style.padding = '2px 4px'
-          cell.style.fontSize = (10 * zoomScale) + 'px'
+          cell.style.fontSize = (10 * RENDER_SCALE * zoomScale) + 'px'
           cell.style.outline = 'none'
           cell.style.overflow = 'hidden'
           cell.style.background = '#fff'
@@ -603,7 +603,7 @@ export default function App() {
       else if (currentTool === 'textbox') {
         el.style.border = `1px solid ${textColor}`
         el.style.background = 'transparent'
-        el.style.fontSize = (fontSize * zoomScale) + 'px'
+        el.style.fontSize = (fontSize * RENDER_SCALE * zoomScale) + 'px'
         el.style.color = textColor
         el.style.padding = '4px'
         el.style.fontFamily = 'Arial, Helvetica, sans-serif'
