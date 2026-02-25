@@ -261,78 +261,69 @@ export default function App() {
     if (['blackout', 'highlight', 'erase', 'textbox'].includes(currentTool)) return
 
     if (currentTool === 'text') {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'text-box-wrapper'
+      wrapper.style.left = x + 'px'
+      wrapper.style.top = y + 'px'
       const box = document.createElement('div')
       box.className = 'text-box'
       box.contentEditable = 'true'
-      box.style.left = x + 'px'
-      box.style.top = y + 'px'
       box.style.fontSize = (fontSize * zoomScale) + 'px'
       box.style.color = textColor
+      wrapper.appendChild(box)
       const entry = {
-        element: box, pageNum,
+        element: wrapper, editableEl: box, pageNum,
         normX: toNorm(x, zoomScale), normY: toNorm(y, zoomScale),
         type: 'text', fontSize, color: textColor,
       }
-      const delBtn = document.createElement('button')
-      delBtn.className = 'delete-btn'
-      delBtn.innerHTML = '&times;'
-      delBtn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault() }
-      delBtn.onclick = (e) => { e.stopPropagation(); removeEntry(entry) }
-      box.appendChild(delBtn)
-      addDragHandle(box, entry)
-      layer.appendChild(box)
+      addControls(wrapper, entry)
+      layer.appendChild(wrapper)
       box.focus()
       addEntry(entry)
     }
     else if (currentTool === 'check' || currentTool === 'cross') {
       const symbol = currentTool === 'check' ? '\u2713' : '\u2717'
+      const wrapper = document.createElement('div')
+      wrapper.className = 'text-box-wrapper'
+      wrapper.style.left = x + 'px'
+      wrapper.style.top = (y - 8) + 'px'
       const box = document.createElement('div')
       box.className = 'text-box'
-      box.style.left = x + 'px'
-      box.style.top = (y - 8) + 'px'
       box.style.fontSize = (fontSize * zoomScale) + 'px'
       box.style.color = textColor
       box.style.fontWeight = 'bold'
       box.textContent = symbol
+      wrapper.appendChild(box)
       const entry = {
-        element: box, pageNum,
+        element: wrapper, editableEl: box, pageNum,
         normX: toNorm(x, zoomScale), normY: toNorm(y - 8, zoomScale),
         type: 'symbol', fontSize, color: textColor,
       }
-      const delBtn = document.createElement('button')
-      delBtn.className = 'delete-btn'
-      delBtn.innerHTML = '&times;'
-      delBtn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault() }
-      delBtn.onclick = (e) => { e.stopPropagation(); removeEntry(entry) }
-      box.appendChild(delBtn)
-      addDragHandle(box, entry)
-      layer.appendChild(box)
+      addControls(wrapper, entry)
+      layer.appendChild(wrapper)
       addEntry(entry)
     }
     else if (currentTool === 'date') {
       const now = new Date()
       const dateStr = `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}/${now.getFullYear()}`
+      const wrapper = document.createElement('div')
+      wrapper.className = 'text-box-wrapper'
+      wrapper.style.left = x + 'px'
+      wrapper.style.top = y + 'px'
       const box = document.createElement('div')
       box.className = 'text-box'
       box.contentEditable = 'true'
-      box.style.left = x + 'px'
-      box.style.top = y + 'px'
       box.style.fontSize = (fontSize * zoomScale) + 'px'
       box.style.color = textColor
       box.textContent = dateStr
+      wrapper.appendChild(box)
       const entry = {
-        element: box, pageNum,
+        element: wrapper, editableEl: box, pageNum,
         normX: toNorm(x, zoomScale), normY: toNorm(y, zoomScale),
         type: 'date', fontSize, color: textColor,
       }
-      const delBtn = document.createElement('button')
-      delBtn.className = 'delete-btn'
-      delBtn.innerHTML = '&times;'
-      delBtn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault() }
-      delBtn.onclick = (e) => { e.stopPropagation(); removeEntry(entry) }
-      box.appendChild(delBtn)
-      addDragHandle(box, entry)
-      layer.appendChild(box)
+      addControls(wrapper, entry)
+      layer.appendChild(wrapper)
       box.focus()
       addEntry(entry)
     }
@@ -515,31 +506,23 @@ export default function App() {
       setPendingImage(null)
     }
     else if (currentTool === 'sticky') {
+      const wrapper = document.createElement('div')
+      wrapper.className = 'text-box-wrapper'
+      wrapper.style.left = x + 'px'
+      wrapper.style.top = y + 'px'
       const el = document.createElement('div')
       el.className = 'sticky-note'
       el.contentEditable = 'true'
-      el.style.left = x + 'px'
-      el.style.top = y + 'px'
+      wrapper.appendChild(el)
       const entry = {
-        element: el, pageNum,
+        element: wrapper, editableEl: el, pageNum,
         normX: toNorm(x, zoomScale), normY: toNorm(y, zoomScale),
         normWidth: 150 / (RENDER_SCALE * zoomScale) * RENDER_SCALE,
         normHeight: 100 / (RENDER_SCALE * zoomScale) * RENDER_SCALE,
         type: 'sticky', fontSize: 10, color: '#000000',
       }
-      const delBtn = document.createElement('button')
-      delBtn.className = 'delete-btn'
-      delBtn.innerHTML = '&times;'
-      delBtn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault() }
-      delBtn.onclick = (e) => { e.stopPropagation(); removeEntry(entry) }
-      el.appendChild(delBtn)
-      const handle = document.createElement('div')
-      handle.className = 'drag-handle'
-      handle.innerHTML = '\u2630'
-      handle.addEventListener('mousedown', (e) => startDrag(e, el, entry))
-      handle.addEventListener('touchstart', (e) => startDrag(e, el, entry), { passive: false })
-      el.appendChild(handle)
-      layer.appendChild(el)
+      addControls(wrapper, entry)
+      layer.appendChild(wrapper)
       el.focus()
       addEntry(entry)
     }
@@ -730,13 +713,21 @@ export default function App() {
     e.stopPropagation()
   }
 
-  const addDragHandle = (box, entry) => {
+  // Add delete button + drag handle to a WRAPPER (outside the contentEditable area)
+  const addControls = (wrapper, entry) => {
+    const delBtn = document.createElement('button')
+    delBtn.className = 'delete-btn'
+    delBtn.innerHTML = '&times;'
+    delBtn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault() }
+    delBtn.onclick = (e) => { e.stopPropagation(); removeEntry(entry) }
+    wrapper.appendChild(delBtn)
+
     const handle = document.createElement('div')
     handle.className = 'drag-handle'
     handle.innerHTML = '\u2630'
-    handle.addEventListener('mousedown', (e) => startDrag(e, box, entry))
-    handle.addEventListener('touchstart', (e) => startDrag(e, box, entry), { passive: false })
-    box.appendChild(handle)
+    handle.addEventListener('mousedown', (e) => startDrag(e, wrapper, entry))
+    handle.addEventListener('touchstart', (e) => startDrag(e, wrapper, entry), { passive: false })
+    wrapper.appendChild(handle)
   }
 
   const addResizeHandles = (el, entry) => {

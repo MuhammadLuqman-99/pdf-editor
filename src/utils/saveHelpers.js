@@ -21,7 +21,8 @@ function extractTextContent(el) {
 }
 
 export function saveTextEntry(page, entry, font, pageHeight) {
-  const text = extractTextContent(entry.element).trim()
+  const el = entry.editableEl || entry.element
+  const text = extractTextContent(el).trim()
   if (!text) return
   const c = parseColor(entry.color)
   const lines = text.split('\n')
@@ -68,7 +69,8 @@ export function saveTextBoxEntry(page, entry, font, pageHeight) {
     width: w, height: h,
     borderColor: rgb(c.r, c.g, c.b), borderWidth: 1,
   })
-  const text = extractTextContent(entry.element).trim()
+  const tbEl = entry.editableEl || entry.element
+  const text = extractTextContent(tbEl).trim()
   if (text) {
     const tc = parseColor(entry.color)
     const lines = text.split('\n')
@@ -153,7 +155,8 @@ export function saveStickyEntry(page, entry, font, pageHeight) {
     width: w, height: h,
     color: rgb(1, 0.98, 0.77), borderColor: rgb(0.94, 0.9, 0.55), borderWidth: 1,
   })
-  const text = extractTextContent(entry.element).trim()
+  const stickyEl = entry.editableEl || entry.element
+  const text = extractTextContent(stickyEl).trim()
   if (text) {
     const lines = text.split('\n')
     const pdfX = entry.normX + 6

@@ -413,8 +413,12 @@ body {
 .text-layer.select-mode { cursor: default; }
 
 /* ===== EDITABLE ELEMENTS ===== */
-.text-box {
+/* Wrapper: positioned on the page, holds text-box + controls */
+.text-box-wrapper {
   position: absolute;
+}
+/* Editable text area: NO controls inside, clean typing */
+.text-box {
   background: transparent;
   border: 1px dashed transparent;
   cursor: text;
@@ -427,18 +431,10 @@ body {
   white-space: pre-wrap;
   word-break: break-word;
 }
-/* Subtle dashed border on hover only */
-.text-box:hover { border-color: rgba(33,150,243,0.35); }
-/* Clean look while typing — thin solid border, no background change */
-.text-box:focus {
-  border: 1px dashed rgba(33,150,243,0.5);
-  background: transparent;
-}
-.text-box.selected {
-  border-color: #2196f3;
-}
-/* Small delete button — top right, ONLY on hover (not while typing/focused) */
-.text-box .delete-btn {
+.text-box-wrapper:hover .text-box { border-color: rgba(33,150,243,0.35); }
+.text-box:focus { border-color: rgba(33,150,243,0.5); }
+/* Delete button: on the WRAPPER, outside editable area */
+.text-box-wrapper > .delete-btn {
   position: absolute;
   top: -8px; right: -8px;
   width: 16px; height: 16px;
@@ -455,8 +451,8 @@ body {
   z-index: 10;
   user-select: none;
 }
-/* Small drag handle — top left, ONLY on hover */
-.text-box .drag-handle {
+/* Drag handle: on the WRAPPER, outside editable area */
+.text-box-wrapper > .drag-handle {
   position: absolute;
   top: -8px; left: -8px;
   width: 16px; height: 16px;
@@ -474,9 +470,9 @@ body {
   user-select: none;
   touch-action: none;
 }
-/* Only show controls on HOVER — NOT on focus (so they don't distract while typing) */
-.text-box:hover .delete-btn { display: flex; }
-.text-box:hover .drag-handle { display: flex; }
+/* Show controls only on hover of the wrapper */
+.text-box-wrapper:hover > .delete-btn { display: flex; }
+.text-box-wrapper:hover > .drag-handle { display: flex; }
 
 /* Shape elements */
 .shape-element {
