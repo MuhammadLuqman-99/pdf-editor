@@ -24,6 +24,27 @@ export function saveTextEntry(page, entry, font, pageHeight) {
   const el = entry.editableEl || entry.element
   const text = extractTextContent(el).trim()
   if (!text) return
+
+  // Handle check/cross symbols — draw as lines (Helvetica can't encode Unicode ✓✗)
+  if (entry.type === 'symbol') {
+    const c = parseColor(entry.color)
+    const color = rgb(c.r, c.g, c.b)
+    const s = entry.fontSize
+    const x = entry.normX
+    const y = pageHeight - entry.normY - s
+    const thickness = Math.max(1.5, s / 7)
+    if (text === '\u2713') {
+      // Checkmark: short line down-right, then long line up-right
+      page.drawLine({ start: { x: x, y: y + s * 0.5 }, end: { x: x + s * 0.3, y: y + s * 0.2 }, thickness, color })
+      page.drawLine({ start: { x: x + s * 0.3, y: y + s * 0.2 }, end: { x: x + s * 0.8, y: y + s * 0.85 }, thickness, color })
+    } else if (text === '\u2717') {
+      // Cross: two diagonal lines
+      page.drawLine({ start: { x: x, y: y + s * 0.8 }, end: { x: x + s * 0.7, y: y + s * 0.1 }, thickness, color })
+      page.drawLine({ start: { x: x, y: y + s * 0.1 }, end: { x: x + s * 0.7, y: y + s * 0.8 }, thickness, color })
+    }
+    return
+  }
+
   const c = parseColor(entry.color)
   const lines = text.split('\n')
   const pdfX = entry.normX
