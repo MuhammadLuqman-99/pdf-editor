@@ -293,14 +293,14 @@
     background: transparent;
     border: 1px dashed transparent;
     cursor: move;
-    min-width: 20px;
-    min-height: 16px;
-    padding: 1px 3px;
+    min-width: 100px;
+    min-height: 20px;
+    padding: 2px 4px;
     outline: none;
     font-family: Arial, Helvetica, sans-serif;
     line-height: 1.3;
-    word-break: break-word;
-    white-space: pre-wrap;
+    white-space: nowrap;
+    color: #000000;
   }
   .text-box:hover { border-color: rgba(59,130,246,0.5); }
   .text-box:focus, .text-box.selected {
@@ -477,7 +477,7 @@
   <div class="toolbar-divider"></div>
   <div class="toolbar-group">
     <label style="font-size:12px; color:#64748b; margin-right:4px;">Color:</label>
-    <input type="color" class="color-picker" id="fontColor" value="#000000" onchange="currentColor=this.value" title="Text color">
+    <input type="color" class="color-picker" id="fontColor" value="#000000" onchange="textColor=this.value" title="Text color">
   </div>
   <div class="toolbar-divider"></div>
   <div class="toolbar-group">
@@ -536,7 +536,7 @@
   let pdfBytes = null;
   let currentTool = 'text';
   let currentFontSize = 11;
-  let currentColor = '#000000';
+  let textColor = '#000000';
   let zoomScale = 1.0;
   let textBoxes = [];
   const RENDER_SCALE = 1.5;
@@ -673,8 +673,7 @@
     box.style.left = x + 'px';
     box.style.top = y + 'px';
     box.style.fontSize = (currentFontSize * zoomScale) + 'px';
-    box.style.color = currentColor;
-    box.style.minWidth = '40px';
+    box.style.color = textColor;
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn';
     deleteBtn.innerHTML = '×';
@@ -687,7 +686,7 @@
       element: box, pageNum,
       getX: () => parseFloat(box.style.left) / scale,
       getY: () => parseFloat(box.style.top) / scale,
-      type: 'text', fontSize: currentFontSize, color: currentColor
+      type: 'text', fontSize: currentFontSize, color: textColor
     };
     textBoxes.push(entry);
   }
@@ -699,7 +698,7 @@
     box.style.left = x + 'px';
     box.style.top = (y - 8) + 'px';
     box.style.fontSize = (currentFontSize * zoomScale) + 'px';
-    box.style.color = currentColor;
+    box.style.color = textColor;
     box.style.fontWeight = 'bold';
     box.style.cursor = 'move';
     box.textContent = symbol;
@@ -714,7 +713,7 @@
       element: box, pageNum,
       getX: () => parseFloat(box.style.left) / scale,
       getY: () => parseFloat(box.style.top) / scale,
-      type: 'symbol', fontSize: currentFontSize, color: currentColor
+      type: 'symbol', fontSize: currentFontSize, color: textColor
     };
     textBoxes.push(entry);
   }
